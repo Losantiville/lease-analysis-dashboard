@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lease Analysis Dashboard - Astonish CRE</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      line-height: 1.6;
+      padding: 1rem;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+    }
+
+    .header {
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #0A0F1E;
+      padding-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .header-text h1 {
+      font-size: 28px;
+      font-weight: 600;
+      color: #0A0F1E;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .export-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-pdf {
+      background: #E8007D;
+      color: white;
+    }
+
+    .btn-pdf:hover {
+      background: #c6005f;
+      box-shadow: 0 2px 8px rgba(232, 0, 125, 0.3);
+    }
+
+    .btn-word {
+      background: #00AFE5;
+      color: white;
+    }
+
+    .btn-word:hover {
+      background: #0088b8;
+      box-shadow: 0 2px 8px rgba(0, 175, 229, 0.3);
+    }
+
+    .btn-secondary {
+      background: #0A0F1E;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #1a1f3a;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #0A0F1E;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 0.75rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .tab-button {
+      padding: 12px 16px;
+      background: #f9f9f9;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.2s;
+    }
+
+    .tab-button.active {
+      color: #E8007D;
+      border-bottom-color: #E8007D;
+    }
+
+    .tab-button:hover {
+      background: #f0f0f0;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #0A0F1E;
+      box-shadow: 0 0 0 3px rgba(10, 15, 30, 0.1);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .metric-card {
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 0.75rem;
+      border: 1px solid #e0e0e0;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #0A0F1E;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      margin-bottom: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      font-size: 12px;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: #f9f9f9;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    th {
+      text-align: right;
+      padding: 10px;
+      font-weight: 600;
+      color: #0A0F1E;
+    }
+
+    th:first-child {
+      text-align: left;
+    }
+
+    td {
+      text-align: right;
+      padding: 8px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 12px;
+    }
+
+    td:first-child {
+      text-align: left;
+      font-weight: 500;
+      color: #0A0F1E;
+    }
+
+    tr:hover {
+      background: #fafafa;
+    }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .summary-card {
+      background: #f9f9f9;
+      border-left: 3px solid #E8007D;
+      border-radius: 6px;
+      padding: 10px;
+      border-top: 1px solid #e0e0e0;
+      border-right: 1px solid #e0e0e0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .summary-label {
+      font-size: 10px;
+      color: #666;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #0A0F1E;
+    }
+
+    .scenario-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e0e0e0;
+      font-size: 11px;
+      color: #999;
+      text-align: center;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+        background: white;
+      }
+
+      .container {
+        box-shadow: none;
+        padding: 0.5rem;
+        max-width: 100%;
+      }
+
+      .export-buttons,
+      .tabs,
+      .scenario-actions {
+        display: none;
+      }
+
+      .tab-content {
+        display: block !important;
+        page-break-after: always;
+      }
+
+      .tab-content:last-child {
+        page-break-after: auto;
+      }
+
+      .section {
+        page-break-inside: avoid;
+      }
+
+      .table-wrapper {
+        page-break-inside: avoid;
+      }
+
+      table {
+        font-size: 11px;
+      }
+
+      th, td {
+        padding: 6px 8px;
+      }
+
+      .header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+      }
+
+      .section-title {
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+      }
+
+      .metrics {
+        margin-bottom: 1rem;
+        gap: 8px;
+      }
+
+      .metric-card {
+        padding: 0.5rem;
+      }
+
+      .metric-value {
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .header {
+        flex-direction: column;
+      }
+
+      .export-buttons {
+        margin-top: 1rem;
+        width: 100%;
+      }
+
+      .btn {
+        flex: 1;
+        justify-content: center;
+        font-size: 12px;
+      }
+
+      .header h1 {
+        font-size: 22px;
+      }
+
+      .inputs-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+
+      .tabs {
+        gap: 4px;
+      }
+
+      .tab-button {
+        padding: 10px 12px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-text">
+        <h1>Lease Analysis Dashboard</h1>
+        <p>Compare up to 5 lease scenarios side-by-side for landlord deal evaluation</p>
+      </div>
+      <div class="export-buttons">
+        <button class="btn btn-pdf" onclick="downloadPDF()">📄 PDF</button>
+        <button class="btn btn-word" onclick="downloadWord()">📝 Word</button>
+      </div>
+    </div>
+
+    <!-- Scenario Tabs -->
+    <div class="section">
+      <h2 class="section-title">Lease Scenarios</h2>
+      <div class="tabs" id="tabs"></div>
+      <div class="scenario-actions">
+        <button class="btn btn-secondary" onclick="addScenario()" id="add-scenario-btn">+ Add Scenario</button>
+        <button class="btn btn-secondary" style="background: #666;" onclick="removeScenario()" id="remove-scenario-btn">✕ Remove Scenario</button>
+      </div>
+    </div>
+
+    <!-- Summary Page -->
+    <div id="summary-page" class="tab-content">
+      <div class="section">
+        <h2 class="section-title">Scenario Comparison</h2>
+        <p style="margin-bottom: 1.5rem; color: #666; font-size: 14px;">Compare all scenarios side-by-side</p>
+        
+        <div class="table-wrapper" id="summary-table-container"></div>
+      </div>
+    </div>
+
+    <!-- Scenario Content -->
+    <div id="scenarios-container"></div>
+
+    <div class="footer">
+      <p>Astonish Commercial Real Estate Services | 9918 Carver Rd, Suite 101, Cincinnati, OH</p>
+    </div>
+  </div>
+
+  <script>
+    let scenarios = [];
+    let currentScenario = 0;
+
+    function formatCurrency(num) {
+      return new Intl.NumberFormat('en-US', { 
+        style: 'currency', 
+        currency: 'USD', 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 0 
+      }).format(num);
+    }
+
+    function formatCurrencyDecimal(num, decimals = 2) {
+      return new Intl.NumberFormat('en-US', { 
+        style: 'currency', 
+        currency: 'USD', 
+        minimumFractionDigits: decimals, 
+        maximumFractionDigits: decimals 
+      }).format(num);
+    }
+
+    function createScenario(index) {
+      return {
+        id: index,
+        name: `Scenario ${index + 1}`,
+        term: 5,
+        sf: 10000,
+        basePsf: 20,
+        rentIncrease: 3,
+        tiIncludedPsf: 5,
+        tiAmortizedPsf: 7.50,
+        tiRate: 5,
+        data: {}
+      };
+    }
+
+    function initializeScenarios() {
+      scenarios = [createScenario(0)];
+      currentScenario = 'summary';
+      renderTabs();
+      renderScenarioContent();
+      switchScenario('summary');
+    }
+
+    function renderTabs() {
+      const tabsContainer = document.getElementById('tabs');
+      tabsContainer.innerHTML = `
+        <button class="tab-button ${currentScenario === 'summary' ? 'active' : ''}" onclick="switchScenario('summary')">
+          📊 Summary
+        </button>
+      ` + scenarios.map((s, i) => `
+        <button class="tab-button ${i === currentScenario ? 'active' : ''}" onclick="switchScenario(${i})">
+          ${s.name}
+        </button>
+      `).join('');
+
+      document.getElementById('add-scenario-btn').disabled = scenarios.length >= 5;
+      document.getElementById('remove-scenario-btn').disabled = scenarios.length <= 1;
+    }
+
+    function renderScenarioContent() {
+      const container = document.getElementById('scenarios-container');
+      container.innerHTML = scenarios.map((scenario, i) => `
+        <div id="scenario-${i}" class="tab-content ${i === currentScenario ? 'active' : ''}">
+          <div class="section">
+            <h3 class="section-title">Lease Inputs - ${scenario.name}</h3>
+            
+            <div class="inputs-grid">
+              <div class="form-group">
+                <label>Scenario Name</label>
+                <input type="text" value="${scenario.name}" onchange="updateScenarioName(${i}, this.value)">
+              </div>
+              <div class="form-group">
+                <label>Lease term (years)</label>
+                <input type="number" value="${scenario.term}" min="1" max="20" step="1" onchange="updateScenario(${i}, 'term', this.value)">
+              </div>
+              <div class="form-group">
+                <label>Square footage</label>
+                <input type="number" value="${scenario.sf}" min="100" step="100" onchange="updateScenario(${i}, 'sf', this.value)">
+              </div>
+              <div class="form-group">
+                <label>Year 1 base rent (psf/yr)</label>
+                <input type="number" value="${scenario.basePsf}" min="0" step="0.50" onchange="updateScenario(${i}, 'basePsf', this.value)">
+              </div>
+            </div>
+
+            <div class="inputs-grid">
+              <div class="form-group">
+                <label>Annual rent increase (%)</label>
+                <input type="number" value="${scenario.rentIncrease}" min="0" max="10" step="0.25" onchange="updateScenario(${i}, 'rentIncrease', this.value)">
+              </div>
+              <div class="form-group">
+                <label>$ TI included in base rent (psf)</label>
+                <input type="number" value="${scenario.tiIncludedPsf}" min="0" step="0.50" onchange="updateScenario(${i}, 'tiIncludedPsf', this.value)">
+              </div>
+              <div class="form-group">
+                <label>$ TI amortized over lease (psf)</label>
+                <input type="number" value="${scenario.tiAmortizedPsf}" min="0" step="0.50" onchange="updateScenario(${i}, 'tiAmortizedPsf', this.value)">
+              </div>
+              <div class="form-group">
+                <label>TI interest rate (%)</label>
+                <input type="number" value="${scenario.tiRate}" min="0" max="15" step="0.25" onchange="updateScenario(${i}, 'tiRate', this.value)">
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3 class="section-title">Key Metrics - ${scenario.name}</h3>
+            <div class="metrics" id="metrics-${i}"></div>
+          </div>
+
+          <div class="section">
+            <h3 class="section-title">Rent Roll & Analysis - ${scenario.name}</h3>
+            <div class="table-wrapper" id="table-${i}"></div>
+            <div class="summary-cards" id="summary-${i}"></div>
+          </div>
+        </div>
+      `).join('');
+
+      scenarios.forEach((s, i) => {
+        calculateScenario(i);
+      });
+    }
+
+    function updateScenarioName(index, newName) {
+      scenarios[index].name = newName;
+      renderTabs();
+      renderScenarioContent();
+    }
+
+    function updateScenario(index, field, value) {
+      scenarios[index][field] = parseFloat(value);
+      calculateScenario(index);
+    }
+
+    function calculateScenario(index) {
+      const s = scenarios[index];
+      const term = parseInt(s.term) || 5;
+      const sf = parseFloat(s.sf) || 10000;
+      const basePsf = parseFloat(s.basePsf) || 20;
+      const rentIncrease = parseFloat(s.rentIncrease) / 100 || 0.03;
+      const tiIncludedPsf = parseFloat(s.tiIncludedPsf) || 0;
+      const tiAmortizedPsf = parseFloat(s.tiAmortizedPsf) || 0;
+      const tiRate = parseFloat(s.tiRate) / 100 || 0.05;
+
+      const tiIncludedDollars = tiIncludedPsf * sf;
+      const tiAmortizedDollars = tiAmortizedPsf * sf;
+      const totalTI = tiIncludedDollars + tiAmortizedDollars;
+      const tiPsfTotal = tiIncludedPsf + tiAmortizedPsf;
+
+      let totalLeaseRent = 0;
+      const rows = [];
+
+      const tiMonthlyAmortization = tiAmortizedDollars > 0 ? tiAmortizedDollars / (term * 12) : 0;
+      let tiBalance = tiAmortizedDollars;
+
+      for (let year = 1; year <= term; year++) {
+        const baseRentPsf = basePsf * Math.pow(1 + rentIncrease, year - 1);
+        const annualBaseRent = baseRentPsf * sf;
+        const monthlyBaseRent = annualBaseRent / 12;
+
+        let yearTIAmortization = 0;
+        let yearTIInterest = 0;
+
+        for (let month = 0; month < 12; month++) {
+          if (tiBalance > 0) {
+            yearTIInterest += tiBalance * tiRate / 12;
+            yearTIAmortization += tiMonthlyAmortization;
+            tiBalance -= tiMonthlyAmortization;
+          }
+        }
+
+        const totalAnnualRent = annualBaseRent + yearTIAmortization + yearTIInterest;
+        totalLeaseRent += totalAnnualRent;
+
+        rows.push({
+          year,
+          baseRentPsf: baseRentPsf,
+          monthlyBaseRent,
+          annualBaseRent,
+          tiAmortization: yearTIAmortization,
+          tiInterest: yearTIInterest,
+          totalAnnualRent
+        });
+      }
+
+      s.data = {
+        term, sf, basePsf, rentIncrease: rentIncrease * 100,
+        tiIncludedPsf, tiAmortizedPsf, tiRate: tiRate * 100,
+        totalLeaseRent, effectiveRent: totalLeaseRent / term,
+        totalTI, tiPsfTotal, rows
+      };
+
+      const metricsDiv = document.getElementById(`metrics-${index}`);
+      if (metricsDiv) {
+        metricsDiv.innerHTML = `
+          <div class="metric-card">
+            <div class="metric-label">Total rent</div>
+            <div class="metric-value">${formatCurrency(s.data.totalLeaseRent)}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Effective rent</div>
+            <div class="metric-value">${formatCurrencyDecimal(s.data.effectiveRent, 0)}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">TI cost</div>
+            <div class="metric-value">${formatCurrency(s.data.totalTI)}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Blended TI/SF</div>
+            <div class="metric-value">${formatCurrencyDecimal(s.data.tiPsfTotal, 2)}</div>
+          </div>
+        `;
+      }
+
+      const tableDiv = document.getElementById(`table-${index}`);
+      if (tableDiv) {
+        tableDiv.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>Base rent/psf</th>
+                <th>Monthly rent</th>
+                <th>Annual rent</th>
+                <th>TI amortization</th>
+                <th>TI interest</th>
+                <th>Total rent</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r => `
+                <tr>
+                  <td>Year ${r.year}</td>
+                  <td>$${r.baseRentPsf.toFixed(2)}</td>
+                  <td>${formatCurrency(r.monthlyBaseRent)}</td>
+                  <td>${formatCurrency(r.annualBaseRent)}</td>
+                  <td>${formatCurrency(r.tiAmortization)}</td>
+                  <td>${formatCurrency(r.tiInterest)}</td>
+                  <td style="font-weight: 600; color: #0A0F1E;">${formatCurrency(r.totalAnnualRent)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      const summaryDiv = document.getElementById(`summary-${index}`);
+      if (summaryDiv) {
+        summaryDiv.innerHTML = `
+          <div class="summary-card">
+            <div class="summary-label">Total lease rent</div>
+            <div class="summary-value">${formatCurrency(s.data.totalLeaseRent)}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Total TI cost</div>
+            <div class="summary-value">${formatCurrency(s.data.totalTI)}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Total rent - TI</div>
+            <div class="summary-value">${formatCurrency(s.data.totalLeaseRent - s.data.totalTI)}</div>
+          </div>
+        `;
+      }
+    }
+
+    function switchScenario(index) {
+      currentScenario = index;
+      renderTabs();
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      
+      if (index === 'summary') {
+        document.getElementById('summary-page').classList.add('active');
+        renderSummaryPage();
+      } else {
+        document.getElementById(`scenario-${index}`).classList.add('active');
+      }
+    }
+
+    function addScenario() {
+      if (scenarios.length < 5) {
+        scenarios.push(createScenario(scenarios.length));
+        renderTabs();
+        renderScenarioContent();
+        switchScenario('summary');
+      }
+    }
+
+    function renderSummaryPage() {
+      const summaryContainer = document.getElementById('summary-table-container');
+      
+      // Create comparison table
+      let html = `
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <thead style="background: #f9f9f9; border-bottom: 2px solid #e0e0e0;">
+            <tr>
+              <th style="text-align: left; padding: 12px; font-weight: 600; color: #0A0F1E; border: 1px solid #e0e0e0;">Metric</th>
+      `;
+      
+      scenarios.forEach(s => {
+        html += `<th style="text-align: right; padding: 12px; font-weight: 600; color: #0A0F1E; border: 1px solid #e0e0e0;">${s.name}</th>`;
+      });
+      
+      html += `</tr></thead><tbody>`;
+      
+      // Define metrics to compare
+      const metrics = [
+        { label: 'Lease Term (years)', key: (s) => s.data.term },
+        { label: 'Square Footage', key: (s) => s.data.sf.toLocaleString() },
+        { label: 'Year 1 Base Rent (psf)', key: (s) => '$' + s.data.basePsf.toFixed(2) },
+        { label: 'Annual Escalation (%)', key: (s) => s.data.rentIncrease.toFixed(2) + '%' },
+        { label: '$ TI Included (psf)', key: (s) => '$' + s.data.tiIncludedPsf.toFixed(2) },
+        { label: '$ TI Amortized (psf)', key: (s) => '$' + s.data.tiAmortizedPsf.toFixed(2) },
+        { label: 'TI Interest Rate (%)', key: (s) => s.data.tiRate.toFixed(2) + '%' },
+        { label: 'Blended TI/SF', key: (s) => formatCurrencyDecimal(s.data.tiPsfTotal, 2) },
+      ];
+      
+      metrics.forEach((metric, idx) => {
+        const bgColor = idx % 2 === 0 ? '#ffffff' : '#f9f9f9';
+        html += `<tr style="background: ${bgColor}; border-bottom: 1px solid #e0e0e0;">
+          <td style="text-align: left; padding: 10px 12px; font-weight: 500; color: #0A0F1E; border: 1px solid #e0e0e0;">${metric.label}</td>`;
+        
+        scenarios.forEach(s => {
+          html += `<td style="text-align: right; padding: 10px 12px; color: #0A0F1E; border: 1px solid #e0e0e0;">${metric.key(s)}</td>`;
+        });
+        
+        html += `</tr>`;
+      });
+      
+      // Key Results section
+      const resultMetrics = [
+        { label: 'Total Lease Rent', key: (s) => formatCurrency(s.data.totalLeaseRent), bold: true },
+        { label: 'Effective Annual Rent', key: (s) => formatCurrency(s.data.effectiveRent), bold: true },
+        { label: 'Total TI Cost', key: (s) => formatCurrency(s.data.totalTI), bold: false },
+        { label: 'Total Rent - TI', key: (s) => formatCurrency(s.data.totalLeaseRent - s.data.totalTI), bold: true },
+      ];
+      
+      html += `<tr style="background: #f0f0f0; border-bottom: 2px solid #e0e0e0;">
+        <td colspan="${scenarios.length + 1}" style="padding: 12px; font-weight: 600; color: #0A0F1E; border: 1px solid #e0e0e0;">KEY RESULTS</td>
+      </tr>`;
+      
+      resultMetrics.forEach((metric, idx) => {
+        const bgColor = idx % 2 === 0 ? '#ffffff' : '#f9f9f9';
+        html += `<tr style="background: ${bgColor}; border-bottom: 1px solid #e0e0e0;">
+          <td style="text-align: left; padding: 10px 12px; font-weight: ${metric.bold ? '600' : '500'}; color: #0A0F1E; border: 1px solid #e0e0e0;">${metric.label}</td>`;
+        
+        scenarios.forEach(s => {
+          html += `<td style="text-align: right; padding: 10px 12px; font-weight: ${metric.bold ? '600' : '400'}; color: #0A0F1E; border: 1px solid #e0e0e0;">${metric.key(s)}</td>`;
+        });
+        
+        html += `</tr>`;
+      });
+      
+      html += `</tbody></table>`;
+      
+      summaryContainer.innerHTML = html;
+    }
+
+    function removeScenario() {
+      if (scenarios.length > 1) {
+        scenarios.splice(currentScenario, 1);
+        currentScenario = Math.min(currentScenario, scenarios.length - 1);
+        renderTabs();
+        renderScenarioContent();
+        switchScenario(currentScenario);
+      }
+    }
+
+    function downloadPDF() {
+      const allScenariosHTML = scenarios.map((scenario, idx) => {
+        const rows = scenario.data.rows.map(r => `
+          <tr style="border: 1px solid #ddd;">
+            <td style="padding: 6px; text-align: left;">Year ${r.year}</td>
+            <td style="padding: 6px; text-align: right;">$${r.baseRentPsf.toFixed(2)}</td>
+            <td style="padding: 6px; text-align: right;">${formatCurrency(r.monthlyBaseRent)}</td>
+            <td style="padding: 6px; text-align: right;">${formatCurrency(r.annualBaseRent)}</td>
+            <td style="padding: 6px; text-align: right;">${formatCurrency(r.tiAmortization)}</td>
+            <td style="padding: 6px; text-align: right;">${formatCurrency(r.tiInterest)}</td>
+            <td style="padding: 6px; text-align: right; font-weight: bold;">${formatCurrency(r.totalAnnualRent)}</td>
+          </tr>
+        `).join('');
+
+        return `
+          <div style="page-break-after: always; padding: 20px; background: white;">
+            <h2 style="font-size: 20px; font-weight: bold; margin: 0 0 10px 0;">${scenario.name}</h2>
+            
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+              <div style="background: #f5f5f5; padding: 10px; border: 1px solid #ddd;">
+                <div style="font-size: 10px; font-weight: bold;">Total Rent</div>
+                <div style="font-size: 14px; font-weight: bold;">${formatCurrency(scenario.data.totalLeaseRent)}</div>
+              </div>
+              <div style="background: #f5f5f5; padding: 10px; border: 1px solid #ddd;">
+                <div style="font-size: 10px; font-weight: bold;">Effective Rent</div>
+                <div style="font-size: 14px; font-weight: bold;">${formatCurrencyDecimal(scenario.data.effectiveRent, 0)}</div>
+              </div>
+              <div style="background: #f5f5f5; padding: 10px; border: 1px solid #ddd;">
+                <div style="font-size: 10px; font-weight: bold;">TI Cost</div>
+                <div style="font-size: 14px; font-weight: bold;">${formatCurrency(scenario.data.totalTI)}</div>
+              </div>
+              <div style="background: #f5f5f5; padding: 10px; border: 1px solid #ddd;">
+                <div style="font-size: 10px; font-weight: bold;">Rent - TI</div>
+                <div style="font-size: 14px; font-weight: bold;">${formatCurrency(scenario.data.totalLeaseRent - scenario.data.totalTI)}</div>
+              </div>
+            </div>
+            
+            <h3 style="font-size: 14px; font-weight: bold; margin: 15px 0 10px 0;">Lease Inputs</h3>
+            <table style="width: 100%; font-size: 11px; margin-bottom: 20px;">
+              <tr><td style="padding: 4px;"><strong>Lease Term:</strong></td><td style="padding: 4px;">${scenario.data.term} years</td></tr>
+              <tr><td style="padding: 4px;"><strong>Square Footage:</strong></td><td style="padding: 4px;">${scenario.data.sf.toLocaleString()} sf</td></tr>
+              <tr><td style="padding: 4px;"><strong>Year 1 Base Rent:</strong></td><td style="padding: 4px;">$${scenario.data.basePsf.toFixed(2)}/sf</td></tr>
+              <tr><td style="padding: 4px;"><strong>Annual Escalation:</strong></td><td style="padding: 4px;">${scenario.data.rentIncrease.toFixed(2)}%</td></tr>
+              <tr><td style="padding: 4px;"><strong>$ TI Included:</strong></td><td style="padding: 4px;">$${scenario.data.tiIncludedPsf.toFixed(2)}/sf</td></tr>
+              <tr><td style="padding: 4px;"><strong>$ TI Amortized:</strong></td><td style="padding: 4px;">$${scenario.data.tiAmortizedPsf.toFixed(2)}/sf</td></tr>
+              <tr><td style="padding: 4px;"><strong>TI Interest Rate:</strong></td><td style="padding: 4px;">${scenario.data.tiRate.toFixed(2)}%</td></tr>
+              <tr><td style="padding: 4px;"><strong>Blended TI/SF:</strong></td><td style="padding: 4px;">${formatCurrencyDecimal(scenario.data.tiPsfTotal, 2)}</td></tr>
+            </table>
+            
+            <h3 style="font-size: 14px; font-weight: bold; margin: 15px 0 10px 0;">Rent Roll</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+              <thead style="background: #f0f0f0; font-weight: bold;">
+                <tr>
+                  <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Year</th>
+                  <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">Base/SF</th>
+                  <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">Monthly</th>
+                  <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">Annual</th>
+                  <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">TI Amort</th>
+                  <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">TI Int</th>
+                  <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }).join('');
+
+      const printWindow = window.open('', '', 'width=800,height=600');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Lease Analysis Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 10px; }
+            table { border-collapse: collapse; }
+            @media print {
+              body { margin: 0; padding: 10px; }
+              .page-break { page-break-after: always; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1 style="text-align: center; margin-bottom: 20px;">Lease Analysis Report</h1>
+          <p style="text-align: center; margin-bottom: 30px;">Astonish Commercial Real Estate Services</p>
+          ${allScenariosHTML}
+          <p style="text-align: center; font-size: 10px; color: #999; margin-top: 30px;">
+            9918 Carver Rd, Suite 101, Cincinnati, OH | Astonish Commercial Real Estate Services
+          </p>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    }
+
+    function downloadWord() {
+      const { Document, Packer, Table, TableRow, TableCell, Paragraph, AlignmentType, WidthType, BorderStyle, PageBreak } = docx;
+
+      const children = [];
+
+      scenarios.forEach((scenario, scenarioIndex) => {
+        if (scenarioIndex > 0) {
+          children.push(new PageBreak());
+        }
+
+        children.push(
+          new Paragraph({
+            text: 'Lease Analysis Report',
+            heading: 'Heading1',
+            bold: true,
+            fontSize: 26,
+            spacing: { after: 100 }
+          }),
+          new Paragraph({
+            text: scenario.name,
+            heading: 'Heading2',
+            bold: true,
+            fontSize: 16,
+            spacing: { after: 200 }
+          }),
+          new Paragraph({
+            text: 'Astonish Commercial Real Estate Services',
+            fontSize: 11,
+            color: '666666',
+            spacing: { after: 300 }
+          }),
+
+          new Paragraph({
+            text: 'Lease Summary',
+            heading: 'Heading2',
+            bold: true,
+            fontSize: 14,
+            spacing: { before: 100, after: 150 },
+            border: { bottom: { color: '000000', space: 1, style: BorderStyle.SINGLE, size: 6 } }
+          }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({ children: [new TableCell({ children: [new Paragraph('Lease Term')] }), new TableCell({ children: [new Paragraph(scenario.data.term + ' years')] })] }),
+              new TableRow({ children: [new TableCell({ children: [new Paragraph('Square Footage')] }), new TableCell({ children: [new Paragraph(scenario.data.sf.toLocaleString())] })] }),
+              new TableRow({ children: [new TableCell({ children: [new Paragraph('Year 1 Base Rent (psf/yr)')] }), new TableCell({ children: [new Paragraph('$' + scenario.data.basePsf.toFixed(2))] })] }),
+              new TableRow({ children: [new TableCell({ children: [new Paragraph('Annual Rent Increase')] }), new TableCell({ children: [new Paragraph(scenario.data.rentIncrease.toFixed(2) + '%')] })] }),
+              new TableRow({ children: [new TableCell({ children: [new Paragraph('$ TI Included in Base Rent')] }), new TableCell({ children: [new Paragraph('$' + scenario.data.tiIncludedPsf.toFixed(2) + '/sf')] })] }),
+              new TableRow({ children: [new TableCell({ children: [new Paragraph('$ TI Amortized Over Lease')] }), new TableCell({ children: [new Paragraph('$' + scenario.data.tiAmortizedPsf.toFixed(2) + '/sf')] })] }),
+              new TableRow({ children: [new TableCell({ children: [new Paragraph('TI Interest Rate')] }), new TableCell({ children: [new Paragraph(scenario.data.tiRate.toFixed(2) + '%')] })] })
+            ]
+          }),
+
+          new Paragraph({
+            text: 'Key Metrics',
+            heading: 'Heading2',
+            bold: true,
+            fontSize: 14,
+            spacing: { before: 200, after: 150 },
+            border: { bottom: { color: '000000', space: 1, style: BorderStyle.SINGLE, size: 6 } }
+          }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({ children: [new TableCell({ children: [new Paragraph({ text: 'Total Lease Rent', bold: true })] }), new TableCell({ children: [new Paragraph({ text: formatCurrency(scenario.data.totalLeaseRent), bold: true })] })] }),
+              new TableRow({ children: [new TableCell({ children: [new Paragraph('Effective Annual Rent')] }), new TableCell({ children: [new Paragraph(formatCurrency(scenario.data.effectiveRent))] })] }),
+              new TableRow({ children: [new TableCell({ children: [new Paragraph('Total TI Cost')] }), new TableCell({ children: [new Paragraph(formatCurrency(scenario.data.totalTI))] })] }),
+              new TableRow({ children: [new TableCell({ children: [new Paragraph('Blended TI/SF')] }), new TableCell({ children: [new Paragraph(formatCurrencyDecimal(scenario.data.tiPsfTotal, 2))] })] }),
+              new TableRow({ children: [new TableCell({ children: [new Paragraph('Total Rent - TI')] }), new TableCell({ children: [new Paragraph(formatCurrency(scenario.data.totalLeaseRent - scenario.data.totalTI))] })] })
+            ]
+          }),
+
+          new Paragraph({
+            text: 'Rent Roll & Analysis',
+            heading: 'Heading2',
+            bold: true,
+            fontSize: 14,
+            spacing: { before: 200, after: 150 },
+            border: { bottom: { color: '000000', space: 1, style: BorderStyle.SINGLE, size: 6 } }
+          }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({ children: [new Paragraph({ text: 'Year', bold: true })] }),
+                  new TableCell({ children: [new Paragraph({ text: 'Base Rent/SF', bold: true })] }),
+                  new TableCell({ children: [new Paragraph({ text: 'Monthly Rent', bold: true })] }),
+                  new TableCell({ children: [new Paragraph({ text: 'Annual Rent', bold: true })] }),
+                  new TableCell({ children: [new Paragraph({ text: 'TI Amortization', bold: true })] }),
+                  new TableCell({ children: [new Paragraph({ text: 'TI Interest', bold: true })] }),
+                  new TableCell({ children: [new Paragraph({ text: 'Total Rent', bold: true })] })
+                ]
+              }),
+              ...scenario.data.rows.map(r => new TableRow({
+                children: [
+                  new TableCell({ children: [new Paragraph('Year ' + r.year)] }),
+                  new TableCell({ children: [new Paragraph('$' + r.baseRentPsf.toFixed(2))] }),
+                  new TableCell({ children: [new Paragraph(formatCurrency(r.monthlyBaseRent))] }),
+                  new TableCell({ children: [new Paragraph(formatCurrency(r.annualBaseRent))] }),
+                  new TableCell({ children: [new Paragraph(formatCurrency(r.tiAmortization))] }),
+                  new TableCell({ children: [new Paragraph(formatCurrency(r.tiInterest))] }),
+                  new TableCell({ children: [new Paragraph({ text: formatCurrency(r.totalAnnualRent), bold: true })] })
+                ]
+              }))
+            ]
+          })
+        );
+      });
+
+      children.push(
+        new Paragraph({
+          text: '9918 Carver Rd, Suite 101, Cincinnati, OH | Astonish Commercial Real Estate Services',
+          fontSize: 10,
+          color: '999999',
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 200 }
+        })
+      );
+
+      const doc = new Document({ sections: [{ children }] });
+
+      Packer.toBlob(doc).then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'lease-analysis-' + new Date().toISOString().split('T')[0] + '.docx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      });
+    }
+
+    initializeScenarios();
+  </script>
+</body>
+</html>

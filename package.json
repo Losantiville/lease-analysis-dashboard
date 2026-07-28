@@ -1,0 +1,11 @@
+{
+  "name": "lease-analysis-dashboard",
+  "version": "1.0.0",
+  "description": "Commercial Real Estate Lease Analysis Dashboard for Astonish CRE",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  }
+}
