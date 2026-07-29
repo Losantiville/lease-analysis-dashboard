@@ -764,18 +764,21 @@
         html += `<th style="text-align: right; padding: 12px; font-weight: 600; color: #0A0F1E; border: 1px solid #e0e0e0;">${s.name}</th>`;
       });
       
+      // Add TOTAL column header
+      html += `<th style="text-align: right; padding: 12px; font-weight: 600; color: white; background: #E8007D; border: 1px solid #E8007D;">TOTAL</th>`;
+      
       html += `</tr></thead><tbody>`;
       
       // Define metrics to compare
       const metrics = [
-        { label: 'Lease Term (years)', key: (s) => s.data.term },
-        { label: 'Square Footage', key: (s) => s.data.sf.toLocaleString() },
-        { label: 'Year 1 Base Rent (psf)', key: (s) => '$' + s.data.basePsf.toFixed(2) },
-        { label: 'Annual Escalation (%)', key: (s) => s.data.rentIncrease.toFixed(2) + '%' },
-        { label: '$ TI Included (psf)', key: (s) => '$' + s.data.tiIncludedPsf.toFixed(2) },
-        { label: '$ TI Amortized (psf)', key: (s) => '$' + s.data.tiAmortizedPsf.toFixed(2) },
-        { label: 'TI Interest Rate (%)', key: (s) => s.data.tiRate.toFixed(2) + '%' },
-        { label: 'Blended TI/SF', key: (s) => formatCurrencyDecimal(s.data.tiPsfTotal, 2) },
+        { label: 'Lease Term (years)', key: (s) => s.data.term, isNumeric: true },
+        { label: 'Square Footage', key: (s) => s.data.sf, isNumeric: true },
+        { label: 'Year 1 Base Rent (psf)', key: (s) => '$' + s.data.basePsf.toFixed(2), isNumeric: false },
+        { label: 'Annual Escalation (%)', key: (s) => s.data.rentIncrease.toFixed(2) + '%', isNumeric: false },
+        { label: '$ TI Included (psf)', key: (s) => '$' + s.data.tiIncludedPsf.toFixed(2), isNumeric: false },
+        { label: '$ TI Amortized (psf)', key: (s) => '$' + s.data.tiAmortizedPsf.toFixed(2), isNumeric: false },
+        { label: 'TI Interest Rate (%)', key: (s) => s.data.tiRate.toFixed(2) + '%', isNumeric: false },
+        { label: 'Blended TI/SF', key: (s) => formatCurrencyDecimal(s.data.tiPsfTotal, 2), isNumeric: false },
       ];
       
       metrics.forEach((metric, idx) => {
@@ -783,23 +786,53 @@
         html += `<tr style="background: ${bgColor}; border-bottom: 1px solid #e0e0e0;">
           <td style="text-align: left; padding: 10px 12px; font-weight: 500; color: #0A0F1E; border: 1px solid #e0e0e0;">${metric.label}</td>`;
         
+        let total = 0;
         scenarios.forEach(s => {
-          html += `<td style="text-align: right; padding: 10px 12px; color: #0A0F1E; border: 1px solid #e0e0e0;">${metric.key(s)}</td>`;
+          const value = metric.key(s);
+          const numValue = typeof value === 'string' ? parseFloat(value.replace(/[$,%]/g, '')) : value;
+          if (metric.isNumeric) total += numValue;
+          html += `<td style="text-align: right; padding: 10px 12px; color: #0A0F1E; border: 1px solid #e0e0e0;">${typeof value === 'number' ? value.toLocaleString() : value}</td>`;
         });
+        
+        // Add TOTAL cell
+        if (metric.isNumeric) {
+          html += `<td style="text-align: right; padding: 10px 12px; font-weight: 600; color: white; background: #E8007D; border: 1px solid #E8007D;">${total.toLocaleString()}</td>`;
+        } else {
+          html += `<td style="text-align: right; padding: 10px 12px; font-weight: 600; color: white; background: #E8007D; border: 1px solid #E8007D;">—</td>`;
+        }
         
         html += `</tr>`;
       });
       
       // Key Results section
       const resultMetrics = [
-        { label: 'Total Lease Rent', key: (s) => formatCurrency(s.data.totalLeaseRent), bold: true },
-        { label: 'Effective Annual Rent', key: (s) => formatCurrency(s.data.effectiveRent), bold: true },
-        { label: 'Total TI Cost', key: (s) => formatCurrency(s.data.totalTI), bold: false },
-        { label: 'Total Rent - TI', key: (s) => formatCurrency(s.data.totalLeaseRent - s.data.totalTI), bold: true },
+        { label: 'Total Square Footage', key: (s) => s.data.sf, isCurrency: false },
+        { label: 'Total Lease Rent', key: (s) => s.data.totalLeaseRent, isCurrency: true, bold: true },
+        { label: 'Effective Annual Rent', key: (s) => s.data.effectiveRent, isCurrency: true, bold: true },
       ];
       
+      // Add year-by-year totals
+      for (let year = 1; year <= Math.max(...scenarios.map(s => s.data.term)); year++) {
+        resultMetrics.push({
+          label: `Year ${year} Total Rent`,
+          key: (s) => {
+            if (year <= s.data.term && s.data.rows[year - 1]) {
+              return s.data.rows[year - 1].totalAnnualRent;
+            }
+            return 0;
+          },
+          isCurrency: true,
+          bold: false
+        });
+      }
+      
+      resultMetrics.push(
+        { label: 'Total TI Cost', key: (s) => s.data.totalTI, isCurrency: true, bold: false },
+        { label: 'Total Rent - TI', key: (s) => s.data.totalLeaseRent - s.data.totalTI, isCurrency: true, bold: true }
+      );
+      
       html += `<tr style="background: #f0f0f0; border-bottom: 2px solid #e0e0e0;">
-        <td colspan="${scenarios.length + 1}" style="padding: 12px; font-weight: 600; color: #0A0F1E; border: 1px solid #e0e0e0;">KEY RESULTS</td>
+        <td colspan="${scenarios.length + 2}" style="padding: 12px; font-weight: 600; color: white; background: #00AFE5; border: 1px solid #00AFE5;">KEY RESULTS</td>
       </tr>`;
       
       resultMetrics.forEach((metric, idx) => {
@@ -807,9 +840,17 @@
         html += `<tr style="background: ${bgColor}; border-bottom: 1px solid #e0e0e0;">
           <td style="text-align: left; padding: 10px 12px; font-weight: ${metric.bold ? '600' : '500'}; color: #0A0F1E; border: 1px solid #e0e0e0;">${metric.label}</td>`;
         
+        let total = 0;
         scenarios.forEach(s => {
-          html += `<td style="text-align: right; padding: 10px 12px; font-weight: ${metric.bold ? '600' : '400'}; color: #0A0F1E; border: 1px solid #e0e0e0;">${metric.key(s)}</td>`;
+          const value = metric.key(s);
+          total += value;
+          const display = metric.isCurrency ? formatCurrency(value) : value.toLocaleString();
+          html += `<td style="text-align: right; padding: 10px 12px; font-weight: ${metric.bold ? '600' : '400'}; color: #0A0F1E; border: 1px solid #e0e0e0;">${display}</td>`;
         });
+        
+        // Add TOTAL cell
+        const totalDisplay = metric.isCurrency ? formatCurrency(total) : total.toLocaleString();
+        html += `<td style="text-align: right; padding: 10px 12px; font-weight: 600; color: white; background: #E8007D; border: 1px solid #E8007D;">${totalDisplay}</td>`;
         
         html += `</tr>`;
       });
