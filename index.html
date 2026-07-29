@@ -765,7 +765,7 @@
       });
       
       // Add TOTAL column header
-      html += `<th style="text-align: right; padding: 12px; font-weight: 600; color: white; background: #E8007D; border: 1px solid #E8007D;">TOTAL</th>`;
+      html += `<th style="text-align: right; padding: 12px; font-weight: 600; color: #0A0F1E; background: #F5B3D4; border: 1px solid #F5B3D4;">TOTAL</th>`;
       
       html += `</tr></thead><tbody>`;
       
@@ -796,9 +796,9 @@
         
         // Add TOTAL cell
         if (metric.isNumeric) {
-          html += `<td style="text-align: right; padding: 10px 12px; font-weight: 600; color: white; background: #E8007D; border: 1px solid #E8007D;">${total.toLocaleString()}</td>`;
+          html += `<td style="text-align: right; padding: 10px 12px; font-weight: 600; color: #0A0F1E; background: #F5B3D4; border: 1px solid #F5B3D4;">${total.toLocaleString()}</td>`;
         } else {
-          html += `<td style="text-align: right; padding: 10px 12px; font-weight: 600; color: white; background: #E8007D; border: 1px solid #E8007D;">—</td>`;
+          html += `<td style="text-align: right; padding: 10px 12px; font-weight: 600; color: #0A0F1E; background: #F5B3D4; border: 1px solid #F5B3D4;">—</td>`;
         }
         
         html += `</tr>`;
@@ -850,7 +850,7 @@
         
         // Add TOTAL cell
         const totalDisplay = metric.isCurrency ? formatCurrency(total) : total.toLocaleString();
-        html += `<td style="text-align: right; padding: 10px 12px; font-weight: 600; color: white; background: #E8007D; border: 1px solid #E8007D;">${totalDisplay}</td>`;
+        html += `<td style="text-align: right; padding: 10px 12px; font-weight: 600; color: #0A0F1E; background: #F5B3D4; border: 1px solid #F5B3D4;">${totalDisplay}</td>`;
         
         html += `</tr>`;
       });
